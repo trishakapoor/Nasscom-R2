@@ -1,3 +1,7 @@
+import {
+  insertLiveTicket,
+  insertMasterIncident,
+} from "@/lib/supabase-encrypted";
 import { NextRequest, NextResponse } from "next/server";
 import { groq } from "@/lib/groq";
 import { supabase } from "@/lib/supabase";
@@ -422,14 +426,14 @@ Draft a raw JSON object to handle this master incident. Format:
               thoughtProcess.push("✅ Agentic Layer: Master Incident drafted successfully.");
               
               // Insert Master Incident
-              await supabase.from('master_incidents').insert({
-                category: finalCategory,
-                triggering_ticket_text: sanitizedText,
-                incident_summary: incidentData.incident_summary || 'N/A',
-                mass_communication_draft: incidentData.mass_communication_draft || 'N/A',
-                remediation_runbook: incidentData.remediation_runbook || 'N/A',
-                related_ticket_count: repeatCount
-              });
+await insertMasterIncident({
+  category: finalCategory,
+  triggering_ticket_text: sanitizedText,
+  incident_summary: incidentData.incident_summary || 'N/A',
+  mass_communication_draft: incidentData.mass_communication_draft || 'N/A',
+  remediation_runbook: incidentData.remediation_runbook || 'N/A',
+  related_ticket_count: repeatCount
+});
               
             } catch(incErr) {
               console.error("Master Incident Generation Failed", incErr);
@@ -462,7 +466,16 @@ Draft a raw JSON object to handle this master incident. Format:
         embedding: embeddingArray ? `[${embeddingArray.join(',')}]` : null
       };
 
-      await supabase.from('live_tickets').insert(insertPayload);
+await insertLiveTicket({
+  category: finalCategory,
+  priority: finalPriority,
+  status: finalStatus,
+  original_redacted_text: sanitizedText,
+  confidence_score: finalConfidence,
+  repeat_count: repeatCount,
+  automation_suggested: automationSuggested,
+  embedding: embeddingArray ? `[${embeddingArray.join(',')}]` : null
+});
     }
 
     return NextResponse.json({
